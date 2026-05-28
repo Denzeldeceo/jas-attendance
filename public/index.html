@@ -4,113 +4,119 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#FF6B35">
+  <meta name="theme-color" content="#FF6B00">
   <title>JAS Studios | Staff Attendance</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --orange: #FF6B35;
-      --orange-dark: #CC4E00;
-      --orange-glow: rgba(255,107,53,0.35);
+      --orange: #FF6B00;
+      --orange-glow: rgba(255,107,0,0.35);
     }
-    html, body {
-      min-height: 100vh;
-      font-family: 'Outfit', sans-serif;
-      -webkit-font-smoothing: antialiased;
+    html, body { min-height: 100vh; font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; }
+
+    /* Background */
+    .bg-fixed {
+      position: fixed; inset: 0; z-index: 0;
     }
+    .bg-fixed img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: blur(2px) brightness(0.35) saturate(0.9);
+      transform: scale(1.05);
+    }
+    .bg-fixed::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,107,0,0.15) 0%, rgba(0,0,0,0.55) 100%);
+    }
+
+    /* Main layout */
     body {
-      background-image: url('/pricing-bg.jpg');
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      position: relative;
-    }
-    body::before {
-      content: "";
-      position: fixed; inset: 0;
-      background: rgba(255,107,53,0.18);
-      backdrop-filter: blur(3px);
-      z-index: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; position: relative;
     }
 
     .container {
-      max-width: 480px; width: 100%;
-      background: white;
-      border-radius: 32px;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.35);
-      overflow: hidden;
       position: relative; z-index: 2;
-      border: 1px solid rgba(255,107,53,0.2);
+      width: min(480px, 100%);
+      display: flex; flex-direction: column; align-items: center;
     }
 
     /* Header */
     .header {
-      background: var(--orange);
-      padding: 28px 24px 22px;
-      text-align: center;
-      color: white;
+      text-align: center; margin-bottom: 18px; width: 100%;
     }
     .header-logo {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 2.6rem; letter-spacing: 4px; line-height: 1;
+      font-size: 3rem; letter-spacing: 6px; color: white;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+      line-height: 1;
     }
     .header-sub {
-      font-size: 11px; font-weight: 600; letter-spacing: 3px;
-      text-transform: uppercase; opacity: 0.85; margin-top: 4px;
+      font-size: 11px; font-weight: 600; letter-spacing: 3.5px;
+      text-transform: uppercase; color: rgba(255,255,255,0.6);
+      margin-top: 4px;
     }
     .header-time {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.6rem; letter-spacing: 2px;
-      margin-top: 10px; opacity: 0.95;
+      font-size: 1.8rem; letter-spacing: 2px;
+      color: white; margin-top: 10px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.4);
     }
     .header-status {
-      display: inline-flex; align-items: center; gap: 7px;
-      margin-top: 8px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 99px; padding: 5px 14px;
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 10px;
+      background: rgba(74,222,128,0.2);
+      border: 1px solid rgba(74,222,128,0.4);
+      border-radius: 99px; padding: 6px 16px;
       font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      color: #4ade80; text-transform: uppercase;
     }
-    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
 
     /* Card */
-    .card { padding: 28px 24px 20px; }
+    .card {
+      background: rgba(12, 6, 0, 0.82);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 28px 24px 24px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
 
     /* PIN dots */
-    .pin-dots {
-      display: flex; justify-content: center; gap: 14px;
-      margin-bottom: 24px;
-    }
-    .pin-dot {
-      width: 16px; height: 16px; border-radius: 50%;
-      border: 2px solid #e0d5ce;
-      background: transparent;
-      transition: all 0.15s;
-    }
-    .pin-dot.filled {
-      background: var(--orange);
-      border-color: var(--orange);
-      transform: scale(1.15);
-    }
     .pin-label {
       text-align: center; font-size: 11px; font-weight: 700;
       letter-spacing: 2.5px; text-transform: uppercase;
-      color: #b0a29a; margin-bottom: 20px;
+      color: rgba(255,255,255,0.4); margin-bottom: 14px;
+    }
+    .pin-dots {
+      display: flex; justify-content: center; gap: 16px;
+      margin-bottom: 22px;
+    }
+    .pin-dot {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.25);
+      background: transparent; transition: all 0.15s;
+    }
+    .pin-dot.filled {
+      background: var(--orange); border-color: var(--orange);
+      transform: scale(1.2);
+      box-shadow: 0 0 10px var(--orange-glow);
     }
 
     /* Action tabs */
-    .action-tabs {
-      display: flex; gap: 8px; margin-bottom: 22px;
-    }
+    .action-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
     .action-tab {
       flex: 1; padding: 13px;
-      border-radius: 14px; border: 2px solid #ffe0d0;
-      background: white; color: #b0a29a;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.4);
       font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700;
       letter-spacing: 0.5px; cursor: pointer;
       transition: all 0.15s; -webkit-tap-highlight-color: transparent;
@@ -118,58 +124,64 @@
     .action-tab.active {
       background: var(--orange); color: white;
       border-color: var(--orange);
-      box-shadow: 0 4px 16px var(--orange-glow);
+      box-shadow: 0 4px 18px var(--orange-glow);
     }
 
     /* Keypad */
     .keypad {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 10px;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-bottom: 10px;
     }
     .key {
-      background: #fff8f5;
-      border: 1.5px solid #ffd5bc;
-      border-radius: 16px;
-      padding: 18px 10px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 18px 10px;
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.9rem; color: #3a2a1a;
+      font-size: 2rem; color: white;
       cursor: pointer; text-align: center;
       transition: all 0.1s; user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
-    .key:active, .key.pressed {
-      background: var(--orange); color: white;
+    .key:active {
+      background: var(--orange);
       border-color: var(--orange);
       transform: scale(0.93);
     }
-    .key-erase { color: #c0776a; font-size: 1rem; font-family: 'Outfit', sans-serif; font-weight: 700; letter-spacing: 0.5px; }
-    .key-back  { font-size: 1.4rem; }
-    .key-zero  { }
+    .key-erase {
+      font-size: 0.85rem; font-family: 'Outfit', sans-serif;
+      font-weight: 700; letter-spacing: 0.5px;
+      color: rgba(255,100,100,0.8);
+    }
+    .key-back { font-size: 1.4rem; }
 
     /* Status message */
     .status-msg {
-      margin-top: 16px; padding: 14px 18px;
-      border-radius: 14px; text-align: center;
-      font-size: 13px; font-weight: 600;
-      min-height: 20px; transition: all 0.2s;
+      margin-top: 14px; padding: 13px 18px;
+      border-radius: 12px; text-align: center;
+      font-size: 13px; font-weight: 600; min-height: 20px;
     }
-    .status-msg.success { background: #e8faf0; color: #1a7840; }
-    .status-msg.error   { background: #ffe8e6; color: #c23d2e; }
+    .status-msg.success { background: rgba(74,222,128,0.15); color: #4ade80; }
+    .status-msg.error   { background: rgba(248,113,113,0.15); color: #f87171; }
     .status-msg.empty   { background: transparent; }
 
-    footer {
-      text-align: center; padding: 16px;
-      font-size: 10px; letter-spacing: 1px;
-      color: #c0b0a4; border-top: 1px solid #ffdfcf;
-      background: white;
-      text-transform: uppercase;
+    /* Admin link */
+    .admin-link {
+      display: block; text-align: center; margin-top: 18px;
+      font-size: 11px; font-weight: 600; letter-spacing: 2px;
+      color: rgba(255,255,255,0.2); text-decoration: none;
+      text-transform: uppercase; transition: color 0.2s;
+      -webkit-tap-highlight-color: transparent;
     }
+    .admin-link:hover { color: var(--orange); }
   </style>
 </head>
 <body>
+
+<!-- Background -->
+<div class="bg-fixed"><img src="/pricing-bg.jpg" alt=""></div>
+
 <div class="container">
+  <!-- Header -->
   <div class="header">
     <div class="header-logo">STAFF ATTENDANCE</div>
     <div class="header-sub">Photography &amp; Glam Saloon</div>
@@ -180,6 +192,7 @@
     </div>
   </div>
 
+  <!-- Card -->
   <div class="card">
     <div class="pin-label">Enter your 4-digit PIN</div>
     <div class="pin-dots">
@@ -205,80 +218,88 @@
       <div class="key" onclick="kPress('8')">8</div>
       <div class="key" onclick="kPress('9')">9</div>
       <div class="key key-erase" onclick="kClear()">ERASE<br>ALL</div>
-      <div class="key key-zero"  onclick="kPress('0')">0</div>
+      <div class="key"           onclick="kPress('0')">0</div>
       <div class="key key-back"  onclick="kBack()">⌫</div>
     </div>
 
     <div class="status-msg empty" id="statusMsg"></div>
   </div>
 
-  <footer>JAS Studios · Attendance System</footer>
+  <!-- Admin link -->
+  <a class="admin-link" href="/admin.html">🔒 Admin Access</a>
 </div>
 
 <script>
   let pin  = '';
-  let mode = 'in'; // 'in' | 'out'
+  let mode = 'in';
 
-  // ── Clock display ────────────────────────────────────────
+  // Clock
   function updateClock() {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
     document.getElementById('headerTime').textContent = dateStr + ' · ' + timeStr;
+
+    // Update status based on time
+    const h = now.getHours(), m = now.getMinutes();
+    const isLate = h > 9 || (h === 9 && m > 45);
+    const statusEl = document.getElementById('statusLabel');
+    const dotEl    = document.querySelector('.status-dot');
+    const badgeEl  = dotEl.parentElement;
+    if (isLate) {
+      statusEl.textContent = 'LATE — CUTOFF WAS 9:45 AM';
+      dotEl.style.background = '#fbbf24';
+      badgeEl.style.background = 'rgba(251,191,36,0.2)';
+      badgeEl.style.borderColor = 'rgba(251,191,36,0.4)';
+      badgeEl.style.color = '#fbbf24';
+    } else {
+      statusEl.textContent = 'ON TIME — CLOCK-IN OPEN UNTIL 9:45 AM';
+      dotEl.style.background = '#4ade80';
+      badgeEl.style.background = 'rgba(74,222,128,0.2)';
+      badgeEl.style.borderColor = 'rgba(74,222,128,0.4)';
+      badgeEl.style.color = '#4ade80';
+    }
   }
   updateClock();
   setInterval(updateClock, 1000);
 
-  // ── Mode switch ──────────────────────────────────────────
+  // Mode
   function setMode(m) {
     mode = m;
     document.getElementById('tabIn').classList.toggle('active',  m === 'in');
     document.getElementById('tabOut').classList.toggle('active', m === 'out');
   }
 
-  // ── PIN logic ────────────────────────────────────────────
+  // PIN
   function updateDots() {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 4; i++)
       document.getElementById('dot' + i).classList.toggle('filled', i < pin.length);
-    }
   }
-
-  function kPress(digit) {
+  function kPress(d) {
     if (pin.length >= 4) return;
-    pin += digit;
-    updateDots();
+    pin += d; updateDots();
     if (pin.length === 4) setTimeout(submit, 150);
   }
+  function kBack()  { pin = pin.slice(0,-1); updateDots(); }
+  function kClear() { pin = ''; updateDots(); }
 
-  function kBack() {
-    pin = pin.slice(0, -1);
-    updateDots();
-  }
-
-  function kClear() {
-    pin = '';
-    updateDots();
-  }
-
-  // ── Keyboard support ─────────────────────────────────────
+  // Keyboard
   document.addEventListener('keydown', e => {
     if (e.key >= '0' && e.key <= '9') kPress(e.key);
     else if (e.key === 'Backspace') kBack();
     else if (e.key === 'Delete' || e.key === 'Escape') kClear();
   });
 
-  // ── Status message ───────────────────────────────────────
+  // Status
   function showMsg(text, type) {
     const el = document.getElementById('statusMsg');
-    el.textContent = text;
-    el.className = 'status-msg ' + type;
-    setTimeout(() => { if (el.textContent === text) { el.textContent = ''; el.className = 'status-msg empty'; } }, 4000);
+    el.textContent = text; el.className = 'status-msg ' + type;
+    setTimeout(() => { if (el.textContent === text) { el.textContent=''; el.className='status-msg empty'; } }, 4000);
   }
 
-  // ── Submit ───────────────────────────────────────────────
+  // Submit
   async function submit() {
-    const submittedPin = pin;
-    kClear();
+    const submittedPin = pin; kClear();
     const endpoint = mode === 'in' ? '/api/clock-in' : '/api/clock-out';
     const timeNow  = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     try {
@@ -288,15 +309,9 @@
         body: JSON.stringify({ staffPin: submittedPin })
       });
       const data = await res.json();
-      if (res.ok) {
-        const action = mode === 'in' ? 'Clocked IN' : 'Clocked OUT';
-        showMsg('✅ ' + action + ' at ' + timeNow, 'success');
-      } else {
-        showMsg(data.error || (mode === 'in' ? 'Clock-in failed' : 'Clock-out failed'), 'error');
-      }
-    } catch {
-      showMsg('⚠️ Network error — please try again', 'error');
-    }
+      if (res.ok) showMsg(data.message || '✅ ' + (mode==='in'?'Clocked IN':'Clocked OUT') + ' at ' + timeNow, 'success');
+      else showMsg(data.error || 'Something went wrong', 'error');
+    } catch { showMsg('⚠️ Network error — please try again', 'error'); }
   }
 </script>
 </body>
