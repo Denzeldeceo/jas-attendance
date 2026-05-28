@@ -1,0 +1,10 @@
+{
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/api/admin/login",    "destination": "/api/admin/login" },
+    { "source": "/api/admin/records",  "destination": "/api/admin/records" },
+    { "source": "/api/admin/employee", "destination": "/api/admin/employee" },
+    { "source": "/api/clock-in",       "destination": "/api/clock-in" },
+    { "source": "/api/clock-out",      "destination": "/api/clock-out" }
+  ]
+}

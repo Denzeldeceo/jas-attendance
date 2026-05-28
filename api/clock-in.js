@@ -1,0 +1,58 @@
+import supabase from '../lib/supabase.js';
+
+const CUTOFF_HOUR   = 9;
+const CUTOFF_MINUTE = 45;
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { staffPin } = req.body;
+  if (!staffPin || staffPin.length !== 4) return res.status(400).json({ error: 'Invalid PIN' });
+
+  // Find employee by PIN
+  const { data: employee, error: empErr } = await supabase
+    .from('employees')
+    .select('id, name, role')
+    .eq('pin', staffPin)
+    .single();
+
+  if (empErr || !employee) return res.status(401).json({ error: 'PIN not recognised. Try again.' });
+
+  // Check if already clocked in today
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: existing } = await supabase
+    .from('attendance')
+    .select('id, clock_in')
+    .eq('employee_id', employee.id)
+    .eq('date', today)
+    .single();
+
+  if (existing?.clock_in) {
+    return res.status(409).json({ error: `${employee.name} already clocked in today.` });
+  }
+
+  // Determine on-time vs late
+  const now    = new Date();
+  const isLate = now.getHours() > CUTOFF_HOUR ||
+                 (now.getHours() === CUTOFF_HOUR && now.getMinutes() > CUTOFF_MINUTE);
+  const status   = isLate ? 'late' : 'present';
+  const clockIn  = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  // Upsert record
+  const { error: upsertErr } = await supabase
+    .from('attendance')
+    .upsert({
+      employee_id: employee.id,
+      date:        today,
+      clock_in:    clockIn,
+      status,
+    }, { onConflict: 'employee_id,date' });
+
+  if (upsertErr) return res.status(500).json({ error: 'Database error. Please try again.' });
+
+  const msg = isLate
+    ? `⚠️ ${employee.name} clocked in LATE at ${clockIn}`
+    : `✅ Welcome, ${employee.name}! Clocked in at ${clockIn}`;
+
+  return res.status(200).json({ success: true, message: msg, name: employee.name, status });
+}

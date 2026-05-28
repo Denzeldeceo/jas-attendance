@@ -1,0 +1,10 @@
+{
+  "name": "jas-attendance",
+  "version": "1.0.0",
+  "description": "JAS Studio Staff Attendance System",
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

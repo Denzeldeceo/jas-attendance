@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#FF6B35">
+  <title>JAS Studios | Staff Attendance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --orange: #FF6B35;
+      --orange-dark: #CC4E00;
+      --orange-glow: rgba(255,107,53,0.35);
+    }
+    html, body {
+      min-height: 100vh;
+      font-family: 'Outfit', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-image: url('pricing-bg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed; inset: 0;
+      background: rgba(255,107,53,0.18);
+      backdrop-filter: blur(3px);
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 480px; width: 100%;
+      background: white;
+      border-radius: 32px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+      overflow: hidden;
+      position: relative; z-index: 2;
+      border: 1px solid rgba(255,107,53,0.2);
+    }
+
+    /* Header */
+    .header {
+      background: var(--orange);
+      padding: 28px 24px 22px;
+      text-align: center;
+      color: white;
+    }
+    .header-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.6rem; letter-spacing: 4px; line-height: 1;
+    }
+    .header-sub {
+      font-size: 11px; font-weight: 600; letter-spacing: 3px;
+      text-transform: uppercase; opacity: 0.85; margin-top: 4px;
+    }
+    .header-time {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem; letter-spacing: 2px;
+      margin-top: 10px; opacity: 0.95;
+    }
+    .header-status {
+      display: inline-flex; align-items: center; gap: 7px;
+      margin-top: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 99px; padding: 5px 14px;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
+
+    /* Card */
+    .card { padding: 28px 24px 20px; }
+
+    /* PIN dots */
+    .pin-dots {
+      display: flex; justify-content: center; gap: 14px;
+      margin-bottom: 24px;
+    }
+    .pin-dot {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid #e0d5ce;
+      background: transparent;
+      transition: all 0.15s;
+    }
+    .pin-dot.filled {
+      background: var(--orange);
+      border-color: var(--orange);
+      transform: scale(1.15);
+    }
+    .pin-label {
+      text-align: center; font-size: 11px; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: #b0a29a; margin-bottom: 20px;
+    }
+
+    /* Action tabs */
+    .action-tabs {
+      display: flex; gap: 8px; margin-bottom: 22px;
+    }
+    .action-tab {
+      flex: 1; padding: 13px;
+      border-radius: 14px; border: 2px solid #ffe0d0;
+      background: white; color: #b0a29a;
+      font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700;
+      letter-spacing: 0.5px; cursor: pointer;
+      transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .action-tab.active {
+      background: var(--orange); color: white;
+      border-color: var(--orange);
+      box-shadow: 0 4px 16px var(--orange-glow);
+    }
+
+    /* Keypad */
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .key {
+      background: #fff8f5;
+      border: 1.5px solid #ffd5bc;
+      border-radius: 16px;
+      padding: 18px 10px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.9rem; color: #3a2a1a;
+      cursor: pointer; text-align: center;
+      transition: all 0.1s; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .key:active, .key.pressed {
+      background: var(--orange); color: white;
+      border-color: var(--orange);
+      transform: scale(0.93);
+    }
+    .key-erase { color: #c0776a; font-size: 1rem; font-family: 'Outfit', sans-serif; font-weight: 700; letter-spacing: 0.5px; }
+    .key-back  { font-size: 1.4rem; }
+    .key-zero  { }
+
+    /* Status message */
+    .status-msg {
+      margin-top: 16px; padding: 14px 18px;
+      border-radius: 14px; text-align: center;
+      font-size: 13px; font-weight: 600;
+      min-height: 20px; transition: all 0.2s;
+    }
+    .status-msg.success { background: #e8faf0; color: #1a7840; }
+    .status-msg.error   { background: #ffe8e6; color: #c23d2e; }
+    .status-msg.empty   { background: transparent; }
+
+    footer {
+      text-align: center; padding: 16px;
+      font-size: 10px; letter-spacing: 1px;
+      color: #c0b0a4; border-top: 1px solid #ffdfcf;
+      background: white;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-logo">STAFF ATTENDANCE</div>
+    <div class="header-sub">Photography &amp; Glam Saloon</div>
+    <div class="header-time" id="headerTime"></div>
+    <div class="header-status">
+      <span class="status-dot"></span>
+      <span id="statusLabel">ON TIME — CLOCK-IN OPEN UNTIL 9:00 AM</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="pin-label">Enter your 4-digit PIN</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="dot0"></div>
+      <div class="pin-dot" id="dot1"></div>
+      <div class="pin-dot" id="dot2"></div>
+      <div class="pin-dot" id="dot3"></div>
+    </div>
+
+    <div class="action-tabs">
+      <button class="action-tab active" id="tabIn"  onclick="setMode('in')">Clock In</button>
+      <button class="action-tab"        id="tabOut" onclick="setMode('out')">Clock Out</button>
+    </div>
+
+    <div class="keypad">
+      <div class="key" onclick="kPress('1')">1</div>
+      <div class="key" onclick="kPress('2')">2</div>
+      <div class="key" onclick="kPress('3')">3</div>
+      <div class="key" onclick="kPress('4')">4</div>
+      <div class="key" onclick="kPress('5')">5</div>
+      <div class="key" onclick="kPress('6')">6</div>
+      <div class="key" onclick="kPress('7')">7</div>
+      <div class="key" onclick="kPress('8')">8</div>
+      <div class="key" onclick="kPress('9')">9</div>
+      <div class="key key-erase" onclick="kClear()">ERASE<br>ALL</div>
+      <div class="key key-zero"  onclick="kPress('0')">0</div>
+      <div class="key key-back"  onclick="kBack()">⌫</div>
+    </div>
+
+    <div class="status-msg empty" id="statusMsg"></div>
+  </div>
+
+  <footer>JAS Studios · Attendance System</footer>
+</div>
+
+<script>
+  let pin  = '';
+  let mode = 'in'; // 'in' | 'out'
+
+  // ── Clock display ────────────────────────────────────────
+  function updateClock() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    document.getElementById('headerTime').textContent = dateStr + ' · ' + timeStr;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ── Mode switch ──────────────────────────────────────────
+  function setMode(m) {
+    mode = m;
+    document.getElementById('tabIn').classList.toggle('active',  m === 'in');
+    document.getElementById('tabOut').classList.toggle('active', m === 'out');
+  }
+
+  // ── PIN logic ────────────────────────────────────────────
+  function updateDots() {
+    for (let i = 0; i < 4; i++) {
+      document.getElementById('dot' + i).classList.toggle('filled', i < pin.length);
+    }
+  }
+
+  function kPress(digit) {
+    if (pin.length >= 4) return;
+    pin += digit;
+    updateDots();
+    if (pin.length === 4) setTimeout(submit, 150);
+  }
+
+  function kBack() {
+    pin = pin.slice(0, -1);
+    updateDots();
+  }
+
+  function kClear() {
+    pin = '';
+    updateDots();
+  }
+
+  // ── Keyboard support ─────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') kPress(e.key);
+    else if (e.key === 'Backspace') kBack();
+    else if (e.key === 'Delete' || e.key === 'Escape') kClear();
+  });
+
+  // ── Status message ───────────────────────────────────────
+  function showMsg(text, type) {
+    const el = document.getElementById('statusMsg');
+    el.textContent = text;
+    el.className = 'status-msg ' + type;
+    setTimeout(() => { if (el.textContent === text) { el.textContent = ''; el.className = 'status-msg empty'; } }, 4000);
+  }
+
+  // ── Submit ───────────────────────────────────────────────
+  async function submit() {
+    const submittedPin = pin;
+    kClear();
+    const endpoint = mode === 'in' ? '/api/clock-in' : '/api/clock-out';
+    const timeNow  = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    try {
+      const res  = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ staffPin: submittedPin })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const action = mode === 'in' ? 'Clocked IN' : 'Clocked OUT';
+        showMsg('✅ ' + action + ' at ' + timeNow, 'success');
+      } else {
+        showMsg(data.error || (mode === 'in' ? 'Clock-in failed' : 'Clock-out failed'), 'error');
+      }
+    } catch {
+      showMsg('⚠️ Network error — please try again', 'error');
+    }
+  }
+</script>
+</body>
+</html>
