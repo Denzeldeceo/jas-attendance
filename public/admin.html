@@ -46,8 +46,12 @@ html, body {
 /* ── Login Screen ── */
 #loginScreen {
   position: fixed; inset: 0; z-index: 50;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: flex-start; justify-content: center;
   padding: 20px;
+  overflow-y: auto;
+}
+@media (min-height: 620px) {
+  #loginScreen { align-items: center; }
 }
 .login-card {
   background: rgba(15,8,0,0.92);
