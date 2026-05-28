@@ -15,8 +15,6 @@
   --orange-dark: #CC4E00;
   --orange-glow: rgba(255,107,0,0.3);
   --white:       #FFFFFF;
-  --glass:       rgba(255,255,255,0.06);
-  --glass-b:     rgba(255,255,255,0.14);
   --bg:          #0d0700;
   --card:        rgba(18,10,0,0.75);
   --present:     #4ade80;
@@ -25,11 +23,14 @@
   --pending:     #94a3b8;
 }
 html, body {
-  min-height: 100%; background: var(--bg);
+  height: 100%;
+  background: var(--bg);
   font-family: 'Outfit', sans-serif;
   color: var(--white);
   -webkit-font-smoothing: antialiased;
 }
+
+/* ── Background ── */
 .bg-fixed { position: fixed; inset: 0; z-index: 0; }
 .bg-fixed img {
   width: 100%; height: 100%;
@@ -46,37 +47,38 @@ html, body {
 /* ── Login Screen ── */
 #loginScreen {
   position: fixed; inset: 0; z-index: 50;
-  display: flex; align-items: flex-start; justify-content: center;
-  padding: 20px;
   overflow-y: auto;
-}
-@media (min-height: 620px) {
-  #loginScreen { align-items: center; }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
 }
 .login-card {
+  position: relative;
   background: rgba(15,8,0,0.92);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 22px;
-  padding: 40px 32px 32px;
-  width: min(380px, 100%);
+  padding: 36px 32px 30px;
+  width: 100%;
+  max-width: 380px;
   text-align: center;
   box-shadow: 0 20px 80px rgba(0,0,0,0.7);
-  animation: popIn 0.5s cubic-bezier(.34,1.56,.64,1) both;
 }
-@keyframes popIn { from{opacity:0;transform:scale(0.88);} to{opacity:1;transform:scale(1);} }
 .login-logo {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 48px; color: var(--orange);
+  font-size: 52px; color: var(--orange);
   letter-spacing: 3px; line-height: 1;
   text-shadow: 0 0 40px var(--orange-glow);
 }
 .login-sub {
   font-size: 11px; font-weight: 600; letter-spacing: 3px;
   color: rgba(255,255,255,0.3); text-transform: uppercase;
-  margin: 4px 0 28px;
+  margin: 4px 0 26px;
 }
+
+/* Form fields */
 .login-form { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
 .login-field { text-align: left; }
 .login-field label {
@@ -149,14 +151,11 @@ html, body {
 .btn-logout:hover { background: rgba(255,80,80,0.25); }
 .dash-body { padding: 20px 16px 40px; max-width: 900px; margin: 0 auto; }
 
-/* Stat cards */
 .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
 @media(max-width: 600px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 .stat-card {
-  background: var(--card); backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px; padding: 16px 14px;
+  background: var(--card); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px 14px;
 }
 .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 36px; line-height: 1; }
 .stat-lbl { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: rgba(255,255,255,0.35); text-transform: uppercase; margin-top: 2px; }
@@ -184,8 +183,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 
 .add-form {
   background: var(--card); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
-  padding: 20px 18px;
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 20px 18px;
 }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
 @media(max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
@@ -213,7 +211,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 .btn-del {
   background: rgba(255,80,80,0.12); color: #ff8888; border: 1px solid rgba(255,80,80,0.2);
   padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 700;
-  cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+  cursor: pointer; transition: all 0.15s;
 }
 .btn-del:hover { background: rgba(255,80,80,0.3); }
 .hist-date {
@@ -227,7 +225,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 <div class="bg-fixed"><img src="/bg.jpg" alt=""></div>
 
 <!-- Login Screen -->
-<div id="loginScreen">
+<div id="loginScreen" style="display:flex">
   <div class="login-card">
     <div class="login-logo">JAS</div>
     <div class="login-sub">Admin Access</div>
@@ -259,36 +257,22 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   <div class="dash-header">
     <div>
       <div class="dash-title">🛡 JAS Admin Panel</div>
-      <div class="dash-sub">Staff Attendance Management</div>
+      <div class="dash-sub" id="dashWelcome">Staff Attendance Management</div>
     </div>
     <button class="btn-logout" onclick="logout()">Log Out</button>
   </div>
   <div class="dash-body">
     <div class="stats-row">
-      <div class="stat-card total">
-        <div class="stat-val" id="statTotal">—</div>
-        <div class="stat-lbl">Total Staff</div>
-      </div>
-      <div class="stat-card present">
-        <div class="stat-val" id="statPresent">—</div>
-        <div class="stat-lbl">Present</div>
-      </div>
-      <div class="stat-card late">
-        <div class="stat-val" id="statLate">—</div>
-        <div class="stat-lbl">Late</div>
-      </div>
-      <div class="stat-card absent">
-        <div class="stat-val" id="statAbsent">—</div>
-        <div class="stat-lbl">Absent</div>
-      </div>
+      <div class="stat-card total"><div class="stat-val" id="statTotal">—</div><div class="stat-lbl">Total Staff</div></div>
+      <div class="stat-card present"><div class="stat-val" id="statPresent">—</div><div class="stat-lbl">Present</div></div>
+      <div class="stat-card late"><div class="stat-val" id="statLate">—</div><div class="stat-lbl">Late</div></div>
+      <div class="stat-card absent"><div class="stat-val" id="statAbsent">—</div><div class="stat-lbl">Absent</div></div>
     </div>
 
     <div class="section-title">Today's Attendance</div>
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr><th>Employee</th><th>Role</th><th>Clock In</th><th>Clock Out</th><th>Status</th></tr>
-        </thead>
+        <thead><tr><th>Employee</th><th>Role</th><th>Clock In</th><th>Clock Out</th><th>Status</th></tr></thead>
         <tbody id="todayBody"></tbody>
       </table>
     </div>
@@ -296,18 +280,9 @@ tr:hover td { background: rgba(255,255,255,0.03); }
     <div class="section-title">Add New Employee</div>
     <div class="add-form">
       <div class="form-grid">
-        <div class="form-field">
-          <label>Full Name</label>
-          <input type="text" id="newName" placeholder="e.g. Jane Doe">
-        </div>
-        <div class="form-field">
-          <label>Role / Position</label>
-          <input type="text" id="newRole" placeholder="e.g. Photographer">
-        </div>
-        <div class="form-field">
-          <label>4-Digit PIN</label>
-          <input type="password" inputmode="numeric" maxlength="4" id="newPin" placeholder="••••">
-        </div>
+        <div class="form-field"><label>Full Name</label><input type="text" id="newName" placeholder="e.g. Jane Doe"></div>
+        <div class="form-field"><label>Role / Position</label><input type="text" id="newRole" placeholder="e.g. Photographer"></div>
+        <div class="form-field"><label>4-Digit PIN</label><input type="password" inputmode="numeric" maxlength="4" id="newPin" placeholder="••••"></div>
       </div>
       <button class="btn-add" onclick="addEmployee()">＋ Add Employee</button>
       <div class="form-msg" id="addMsg"></div>
@@ -316,9 +291,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
     <div class="section-title">All Employees</div>
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr><th>ID</th><th>Name</th><th>Role</th><th>Action</th></tr>
-        </thead>
+        <thead><tr><th>Name</th><th>Role</th><th>Action</th></tr></thead>
         <tbody id="empBody"></tbody>
       </table>
     </div>
@@ -342,21 +315,20 @@ async function doLogin() {
   const username = document.getElementById('loginUser').value.trim();
   const password = document.getElementById('loginPass').value;
   const errEl    = document.getElementById('loginErr');
-  if (!username || !password) { errEl.textContent = 'Please enter both username and password.'; return; }
+  if (!username || !password) { errEl.textContent = 'Please enter both fields.'; return; }
   const btn = document.querySelector('.login-btn');
   btn.textContent = 'Verifying…'; btn.style.opacity = '0.7';
   try {
     const r = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
     const d = await r.json();
     if (d.success) {
       adminToken = d.token;
       sessionStorage.setItem('jasAdminToken', adminToken);
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('dashboard').style.display   = 'block';
+      if (d.username) document.getElementById('dashWelcome').textContent = 'Welcome back, ' + d.username;
+      showDashboard();
       loadDashboard();
     } else {
       errEl.textContent = d.message || 'Incorrect username or password.';
@@ -367,39 +339,45 @@ async function doLogin() {
   btn.textContent = 'Access Admin Panel'; btn.style.opacity = '';
 }
 
+function showDashboard() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display   = 'block';
+}
+
+function showLogin() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('dashboard').style.display   = 'none';
+}
+
 function logout() {
   sessionStorage.removeItem('jasAdminToken');
   adminToken = '';
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
   document.getElementById('loginErr').textContent = '';
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('dashboard').style.display   = 'none';
+  showLogin();
 }
 
-// ── Single keyboard listener (Enter to submit login) ──────
+// Enter key submits login
 document.addEventListener('keydown', e => {
-  const loginVisible = document.getElementById('loginScreen').style.display !== 'none';
-  if (loginVisible && e.key === 'Enter') doLogin();
+  if (document.getElementById('loginScreen').style.display !== 'none' && e.key === 'Enter') doLogin();
 });
 
-// ── Auto-login if token stored ────────────────────────────
+// Auto-login if token stored — verify it first
 if (adminToken) {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('dashboard').style.display   = 'block';
-  loadDashboard();
+  fetch('/api/admin/records', { headers: { 'Authorization': 'Bearer ' + adminToken } })
+    .then(r => { if (r.ok) { showDashboard(); loadDashboard(); } else { sessionStorage.removeItem('jasAdminToken'); adminToken = ''; } })
+    .catch(() => {});
 }
 
 async function loadDashboard() {
   try {
-    const r = await fetch('/api/admin/records', {
-      headers: { 'Authorization': 'Bearer ' + adminToken }
-    });
+    const r = await fetch('/api/admin/records', { headers: { 'Authorization': 'Bearer ' + adminToken } });
     if (r.status === 401) { logout(); return; }
     const d = await r.json();
-    renderToday(d.today);
-    renderHistory(d.history);
-    renderEmployees();
+    renderToday(d.today || []);
+    renderHistory(d.history || []);
+    renderEmployees(d.today || []);
   } catch { console.error('Dashboard load failed'); }
 }
 
@@ -412,13 +390,13 @@ function renderToday(records) {
     else if (r.status === 'late') { present++; late++; }
     else if (r.status === 'absent') absent++;
     html += `<tr>
-      <td><strong>${r.name}</strong></td>
-      <td>${r.role}</td>
+      <td><strong>${r.name}</strong></td><td>${r.role}</td>
       <td>${r.clockIn  || '<span style="opacity:.35">—</span>'}</td>
       <td>${r.clockOut || '<span style="opacity:.35">—</span>'}</td>
       <td><span class="badge badge-${sc}">${sl}</span></td>
     </tr>`;
   }
+  if (!html) html = '<tr><td colspan="5" style="opacity:.35;padding:20px;text-align:center">No records yet today</td></tr>';
   document.getElementById('todayBody').innerHTML     = html;
   document.getElementById('statTotal').textContent   = records.length;
   document.getElementById('statPresent').textContent = present;
@@ -437,11 +415,23 @@ function renderHistory(history) {
     }
     html += '</tbody></table></div>';
   }
+  if (!html) html = '<p style="opacity:.35;padding:20px;text-align:center;font-size:13px">No history yet</p>';
   document.getElementById('historyWrap').innerHTML = html;
 }
 
-async function renderEmployees() {
-  document.getElementById('empBody').innerHTML = '<tr><td colspan="4" style="opacity:.35;padding:20px;text-align:center">Add employees below. Use the admin API to manage PINs.</td></tr>';
+function renderEmployees(records) {
+  let html = '';
+  for (const r of records) {
+    html += `<tr><td><strong>${r.name}</strong></td><td>${r.role}</td><td><button class="btn-del" onclick="deleteEmployee('${r.name}')">Remove</button></td></tr>`;
+  }
+  if (!html) html = '<tr><td colspan="3" style="opacity:.35;padding:20px;text-align:center">No employees yet — add below</td></tr>';
+  document.getElementById('empBody').innerHTML = html;
+}
+
+async function deleteEmployee(name) {
+  if (!confirm('Remove ' + name + '?')) return;
+  // placeholder — needs API endpoint
+  alert('Delete via Supabase dashboard for now.');
 }
 
 async function addEmployee() {
