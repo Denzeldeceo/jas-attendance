@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#FF6B00">
 <title>Admin — JAS Studio Attendance</title>
@@ -48,13 +49,12 @@ html, body {
 #loginScreen {
   position: fixed; inset: 0; z-index: 50;
   overflow-y: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 20px;
+  display: block;
+  padding: 40px 20px;
+  text-align: center;
 }
 .login-card {
-  position: relative;
+  display: inline-block;
   background: rgba(15,8,0,0.92);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
