@@ -69,7 +69,7 @@
   overlay.id = 'jasTransition';
   overlay.innerHTML = `
     <div class="jas-tlogo">JAS</div>
-    <div class="jas-tsub">Photography &amp; Glam Saloon</div>
+    <div class="jas-tsub">Photography &amp; Glam Salon</div>
     <div class="jas-bar-track">
       <div class="jas-bar-fill" id="jasBarFill"></div>
     </div>
