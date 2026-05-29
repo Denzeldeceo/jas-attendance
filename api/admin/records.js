@@ -1,16 +1,45 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// ADD THIS QUERY to your existing api/admin/records.js
-// Inside your handler, alongside your existing today/history queries,
-// add the deviceLocks fetch and include it in the response.
-// ─────────────────────────────────────────────────────────────────────────────
+import supabase from '../../lib/supabase.js';
 
-// Paste this block into your records.js handler:
+export default async function handler(req, res) {
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const today = new Date().toISOString().slice(0, 10);
 
-  // ... your existing today + history queries ...
+  // ── Today's attendance ────────────────────────────────────────────────────
+  const { data: todayRows } = await supabase
+    .from('attendance')
+    .select('employee_id, date, clock_in, clock_out, device_id, status, employees(name, role)')
+    .eq('date', today)
+    .order('clock_in', { ascending: true });
 
-  // ── Fetch today's device locks for the admin panel table ──────────────────
+  const todayData = (todayRows || []).map(r => ({
+    name:     r.employees?.name,
+    role:     r.employees?.role,
+    clockIn:  r.clock_in,
+    clockOut: r.clock_out || '—',
+    deviceId: r.device_id,
+    status:   r.status,
+  }));
+
+  // ── 30-day history ────────────────────────────────────────────────────────
+  const { data: historyRows } = await supabase
+    .from('attendance')
+    .select('employee_id, date, clock_in, clock_out, device_id, status, employees(name, role)')
+    .neq('date', today)
+    .order('date', { ascending: false })
+    .limit(200);
+
+  const history = (historyRows || []).map(r => ({
+    name:     r.employees?.name,
+    role:     r.employees?.role,
+    date:     r.date,
+    clockIn:  r.clock_in,
+    clockOut: r.clock_out || '—',
+    deviceId: r.device_id,
+    status:   r.status,
+  }));
+
+  // ── Today's device locks ──────────────────────────────────────────────────
   const { data: lockRows } = await supabase
     .from('device_locks')
     .select('device_id, employee_name, locked_at')
@@ -23,9 +52,13 @@
     lockedAt:     l.locked_at || '—',
   }));
 
-  // ── Include deviceLocks in your existing return statement ─────────────────
-  return res.status(200).json({
-    today:       /* your existing today array */,
-    history:     /* your existing history array */,
-    deviceLocks,           // ← add this line
-  });
+  // ── All employees ─────────────────────────────────────────────────────────
+  const { data: employeeRows } = await supabase
+    .from('employees')
+    .select('id, name, role')
+    .order('name', { ascending: true });
+
+  const employees = (employeeRows || []);
+
+  return res.status(200).json({ today: todayData, history, deviceLocks, employees });
+}
