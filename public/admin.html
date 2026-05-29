@@ -340,7 +340,6 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   </div>
 </div>
 
-<script>
 let adminToken = sessionStorage.getItem('jasAdminToken') || '';
 
 function togglePass() {
@@ -412,7 +411,7 @@ async function loadDashboard() {
     const d = await r.json();
     renderToday(d.today || []);
     renderHistory(d.history || []);
-    renderEmployees(d.today || []);
+    renderEmployees(d.employees || []);       // ← uses employees list, not today's records
     renderDeviceLocks(d.deviceLocks || []);
   } catch { console.error('Dashboard load failed'); }
 }
@@ -442,8 +441,6 @@ function renderToday(records) {
   document.getElementById('statAbsent').textContent  = absent;
 }
 
-// ── Device locks table ────────────────────────────────────────────────────────
-// Expected shape: [{ deviceId, employeeName, lockedAt }, ...]
 function renderDeviceLocks(locks) {
   let html = '';
   for (const l of locks) {
@@ -451,18 +448,13 @@ function renderDeviceLocks(locks) {
       <td><strong>${l.employeeName}</strong></td>
       <td><span class="device-id" title="${l.deviceId}">${l.deviceId}</span></td>
       <td>${l.lockedAt || '—'}</td>
-      <td>
-        <button class="btn-unlock" onclick="clearDeviceLock('${l.deviceId}', '${l.employeeName}')">
-          🔓 Clear Lock
-        </button>
-      </td>
+      <td><button class="btn-unlock" onclick="clearDeviceLock('${l.deviceId}', '${l.employeeName}')">🔓 Clear Lock</button></td>
     </tr>`;
   }
   if (!html) html = '<tr><td colspan="4" style="opacity:.35;padding:20px;text-align:center">No active device locks today</td></tr>';
   document.getElementById('deviceBody').innerHTML = html;
 }
 
-// ── Clear a device lock (admin override) ─────────────────────────────────────
 async function clearDeviceLock(deviceId, employeeName) {
   if (!confirm(`Clear the device lock for ${employeeName}?\n\nThis will allow that device to be used by another employee today, or allow ${employeeName} to clock in on a different device.`)) return;
   try {
@@ -472,11 +464,8 @@ async function clearDeviceLock(deviceId, employeeName) {
       body: JSON.stringify({ deviceId })
     });
     const d = await r.json();
-    if (d.success) {
-      loadDashboard();
-    } else {
-      alert(d.message || 'Failed to clear lock.');
-    }
+    if (d.success) { loadDashboard(); }
+    else { alert(d.message || 'Failed to clear lock.'); }
   } catch { alert('Server error. Please try again.'); }
 }
 
@@ -495,18 +484,32 @@ function renderHistory(history) {
   document.getElementById('historyWrap').innerHTML = html;
 }
 
-function renderEmployees(records) {
+// ── All Employees — uses full employees list from DB ─────────────────────────
+function renderEmployees(employees) {
   let html = '';
-  for (const r of records) {
-    html += `<tr><td><strong>${r.name}</strong></td><td>${r.role}</td><td><button class="btn-del" onclick="deleteEmployee('${r.name}')">Remove</button></td></tr>`;
+  for (const e of employees) {
+    html += `<tr>
+      <td><strong>${e.name}</strong></td>
+      <td>${e.role}</td>
+      <td><button class="btn-del" onclick="deleteEmployee('${e.id}', '${e.name}')">Remove</button></td>
+    </tr>`;
   }
   if (!html) html = '<tr><td colspan="3" style="opacity:.35;padding:20px;text-align:center">No employees yet — add below</td></tr>';
   document.getElementById('empBody').innerHTML = html;
 }
 
-async function deleteEmployee(name) {
-  if (!confirm('Remove ' + name + '?')) return;
-  alert('Delete via Supabase dashboard for now.');
+async function deleteEmployee(id, name) {
+  if (!confirm('Remove ' + name + '? This cannot be undone.')) return;
+  try {
+    const r = await fetch('/api/admin/employee', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + adminToken },
+      body: JSON.stringify({ id })
+    });
+    const d = await r.json();
+    if (d.success) { loadDashboard(); }
+    else { alert(d.message || 'Failed to remove employee.'); }
+  } catch { alert('Server error. Please try again.'); }
 }
 
 async function addEmployee() {
@@ -534,7 +537,6 @@ async function addEmployee() {
 }
 
 setInterval(() => { if (adminToken) loadDashboard(); }, 30000);
-</script>
 <script src="/transition.js"></script>
 </body>
 </html>
