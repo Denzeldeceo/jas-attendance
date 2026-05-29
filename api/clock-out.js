@@ -8,6 +8,12 @@ export default async function handler(req, res) {
   if (!staffPin || staffPin.length !== 4) return res.status(400).json({ error: 'Invalid PIN' });
   if (!deviceId) return res.status(400).json({ error: 'Device ID missing. Please refresh and try again.' });
 
+  // ── Block: outside working hours (9:00 AM – 8:00 PM) ─────────────────────
+  const nowHour = new Date().getHours();
+  if (nowHour < 9 || nowHour >= 20) {
+    return res.status(403).json({ error: 'Clock-out is only allowed between 9:00 AM and 8:00 PM.' });
+  }
+
   // ── Find employee by PIN ───────────────────────────────────────────────────
   const { data: employee, error: empErr } = await supabase
     .from('employees')
@@ -30,7 +36,6 @@ export default async function handler(req, res) {
   if (!record?.clock_in) {
     return res.status(400).json({ error: `${employee.name} hasn't clocked in yet today.` });
   }
-
   if (record.clock_out) {
     return res.status(409).json({ error: `${employee.name} already clocked out today.` });
   }
