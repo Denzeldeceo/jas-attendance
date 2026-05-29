@@ -78,7 +78,6 @@ html, body {
   margin: 4px 0 26px;
 }
 
-/* Form fields */
 .login-form { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
 .login-field { text-align: left; }
 .login-field label {
@@ -169,6 +168,10 @@ html, body {
   letter-spacing: 2px; color: rgba(255,255,255,0.7);
   margin-bottom: 12px; margin-top: 24px;
 }
+.section-note {
+  font-size: 12px; color: rgba(255,255,255,0.35);
+  margin-bottom: 12px; margin-top: -8px; line-height: 1.5;
+}
 .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); }
 table { width: 100%; border-collapse: collapse; }
 thead { background: rgba(255,107,0,0.12); }
@@ -180,6 +183,9 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 .badge-late    { background: rgba(251,191,36,0.15); color: var(--late); }
 .badge-absent  { background: rgba(248,113,113,0.15); color: var(--absent); }
 .badge-pending { background: rgba(148,163,184,0.15); color: var(--pending); }
+
+/* Device lock badge */
+.badge-locked  { background: rgba(251,191,36,0.15); color: #fbbf24; }
 
 .add-form {
   background: var(--card); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
@@ -208,16 +214,29 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 .form-msg { font-size: 12px; margin-top: 8px; min-height: 16px; }
 .form-msg.ok  { color: var(--present); }
 .form-msg.err { color: var(--absent); }
+
 .btn-del {
   background: rgba(255,80,80,0.12); color: #ff8888; border: 1px solid rgba(255,80,80,0.2);
   padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 700;
-  cursor: pointer; transition: all 0.15s;
+  cursor: pointer; transition: all 0.15s; font-family: 'Outfit', sans-serif;
 }
 .btn-del:hover { background: rgba(255,80,80,0.3); }
+
+/* Clear device lock button */
+.btn-unlock {
+  background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25);
+  padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; font-family: 'Outfit', sans-serif;
+}
+.btn-unlock:hover { background: rgba(251,191,36,0.25); }
+
 .hist-date {
   font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 2px;
   color: rgba(255,255,255,0.4); padding: 12px 0 6px;
 }
+
+/* Device truncation */
+.device-id { font-family: monospace; font-size: 11px; color: rgba(255,255,255,0.4); max-width: 140px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -262,6 +281,8 @@ tr:hover td { background: rgba(255,255,255,0.03); }
     <button class="btn-logout" onclick="logout()">Log Out</button>
   </div>
   <div class="dash-body">
+
+    <!-- Stats row -->
     <div class="stats-row">
       <div class="stat-card total"><div class="stat-val" id="statTotal">—</div><div class="stat-lbl">Total Staff</div></div>
       <div class="stat-card present"><div class="stat-val" id="statPresent">—</div><div class="stat-lbl">Present</div></div>
@@ -269,14 +290,29 @@ tr:hover td { background: rgba(255,255,255,0.03); }
       <div class="stat-card absent"><div class="stat-val" id="statAbsent">—</div><div class="stat-lbl">Absent</div></div>
     </div>
 
+    <!-- Today's attendance -->
     <div class="section-title">Today's Attendance</div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Employee</th><th>Role</th><th>Clock In</th><th>Clock Out</th><th>Status</th></tr></thead>
+        <thead><tr><th>Employee</th><th>Role</th><th>Clock In</th><th>Clock Out</th><th>Device</th><th>Status</th></tr></thead>
         <tbody id="todayBody"></tbody>
       </table>
     </div>
 
+    <!-- Device locks -->
+    <div class="section-title">Today's Device Locks</div>
+    <div class="section-note">
+      Each device is locked to one employee per day. If an employee loses their device or needs to switch, you can clear the lock here.
+      Locks automatically expire at midnight.
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Employee</th><th>Device ID</th><th>Locked Since</th><th>Action</th></tr></thead>
+        <tbody id="deviceBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Add employee -->
     <div class="section-title">Add New Employee</div>
     <div class="add-form">
       <div class="form-grid">
@@ -288,6 +324,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
       <div class="form-msg" id="addMsg"></div>
     </div>
 
+    <!-- All employees -->
     <div class="section-title">All Employees</div>
     <div class="table-wrap">
       <table>
@@ -296,8 +333,10 @@ tr:hover td { background: rgba(255,255,255,0.03); }
       </table>
     </div>
 
+    <!-- History -->
     <div class="section-title">30-Day History</div>
     <div id="historyWrap"></div>
+
   </div>
 </div>
 
@@ -343,12 +382,10 @@ function showDashboard() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('dashboard').style.display   = 'block';
 }
-
 function showLogin() {
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('dashboard').style.display   = 'none';
 }
-
 function logout() {
   sessionStorage.removeItem('jasAdminToken');
   adminToken = '';
@@ -358,12 +395,10 @@ function logout() {
   showLogin();
 }
 
-// Enter key submits login
 document.addEventListener('keydown', e => {
   if (document.getElementById('loginScreen').style.display !== 'none' && e.key === 'Enter') doLogin();
 });
 
-// Auto-login if token stored — verify it first
 if (adminToken) {
   fetch('/api/admin/records', { headers: { 'Authorization': 'Bearer ' + adminToken } })
     .then(r => { if (r.ok) { showDashboard(); loadDashboard(); } else { sessionStorage.removeItem('jasAdminToken'); adminToken = ''; } })
@@ -378,6 +413,7 @@ async function loadDashboard() {
     renderToday(d.today || []);
     renderHistory(d.history || []);
     renderEmployees(d.today || []);
+    renderDeviceLocks(d.deviceLocks || []);
   } catch { console.error('Dashboard load failed'); }
 }
 
@@ -389,19 +425,59 @@ function renderToday(records) {
     if (r.status === 'present') present++;
     else if (r.status === 'late') { present++; late++; }
     else if (r.status === 'absent') absent++;
+    const devShort = r.deviceId ? `<span class="device-id" title="${r.deviceId}">${r.deviceId}</span>` : '<span style="opacity:.3">—</span>';
     html += `<tr>
       <td><strong>${r.name}</strong></td><td>${r.role}</td>
       <td>${r.clockIn  || '<span style="opacity:.35">—</span>'}</td>
       <td>${r.clockOut || '<span style="opacity:.35">—</span>'}</td>
+      <td>${devShort}</td>
       <td><span class="badge badge-${sc}">${sl}</span></td>
     </tr>`;
   }
-  if (!html) html = '<tr><td colspan="5" style="opacity:.35;padding:20px;text-align:center">No records yet today</td></tr>';
+  if (!html) html = '<tr><td colspan="6" style="opacity:.35;padding:20px;text-align:center">No records yet today</td></tr>';
   document.getElementById('todayBody').innerHTML     = html;
   document.getElementById('statTotal').textContent   = records.length;
   document.getElementById('statPresent').textContent = present;
   document.getElementById('statLate').textContent    = late;
   document.getElementById('statAbsent').textContent  = absent;
+}
+
+// ── Device locks table ────────────────────────────────────────────────────────
+// Expected shape: [{ deviceId, employeeName, lockedAt }, ...]
+function renderDeviceLocks(locks) {
+  let html = '';
+  for (const l of locks) {
+    html += `<tr>
+      <td><strong>${l.employeeName}</strong></td>
+      <td><span class="device-id" title="${l.deviceId}">${l.deviceId}</span></td>
+      <td>${l.lockedAt || '—'}</td>
+      <td>
+        <button class="btn-unlock" onclick="clearDeviceLock('${l.deviceId}', '${l.employeeName}')">
+          🔓 Clear Lock
+        </button>
+      </td>
+    </tr>`;
+  }
+  if (!html) html = '<tr><td colspan="4" style="opacity:.35;padding:20px;text-align:center">No active device locks today</td></tr>';
+  document.getElementById('deviceBody').innerHTML = html;
+}
+
+// ── Clear a device lock (admin override) ─────────────────────────────────────
+async function clearDeviceLock(deviceId, employeeName) {
+  if (!confirm(`Clear the device lock for ${employeeName}?\n\nThis will allow that device to be used by another employee today, or allow ${employeeName} to clock in on a different device.`)) return;
+  try {
+    const r = await fetch('/api/admin/device-lock', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + adminToken },
+      body: JSON.stringify({ deviceId })
+    });
+    const d = await r.json();
+    if (d.success) {
+      loadDashboard();
+    } else {
+      alert(d.message || 'Failed to clear lock.');
+    }
+  } catch { alert('Server error. Please try again.'); }
 }
 
 function renderHistory(history) {
@@ -430,7 +506,6 @@ function renderEmployees(records) {
 
 async function deleteEmployee(name) {
   if (!confirm('Remove ' + name + '?')) return;
-  // placeholder — needs API endpoint
   alert('Delete via Supabase dashboard for now.');
 }
 
