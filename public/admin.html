@@ -77,7 +77,6 @@ html, body {
   color: rgba(255,255,255,0.3); text-transform: uppercase;
   margin: 4px 0 26px;
 }
-
 .login-form { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
 .login-field { text-align: left; }
 .login-field label {
@@ -183,8 +182,6 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 .badge-late    { background: rgba(251,191,36,0.15); color: var(--late); }
 .badge-absent  { background: rgba(248,113,113,0.15); color: var(--absent); }
 .badge-pending { background: rgba(148,163,184,0.15); color: var(--pending); }
-
-/* Device lock badge */
 .badge-locked  { background: rgba(251,191,36,0.15); color: #fbbf24; }
 
 .add-form {
@@ -222,7 +219,6 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 }
 .btn-del:hover { background: rgba(255,80,80,0.3); }
 
-/* Clear device lock button */
 .btn-unlock {
   background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25);
   padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 700;
@@ -235,7 +231,6 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   color: rgba(255,255,255,0.4); padding: 12px 0 6px;
 }
 
-/* Device truncation */
 .device-id { font-family: monospace; font-size: 11px; color: rgba(255,255,255,0.4); max-width: 140px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle; }
 </style>
 </head>
@@ -340,6 +335,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   </div>
 </div>
 
+<script>
 let adminToken = sessionStorage.getItem('jasAdminToken') || '';
 
 function togglePass() {
@@ -411,7 +407,7 @@ async function loadDashboard() {
     const d = await r.json();
     renderToday(d.today || []);
     renderHistory(d.history || []);
-    renderEmployees(d.employees || []);       // ← uses employees list, not today's records
+    renderEmployees(d.employees || []);
     renderDeviceLocks(d.deviceLocks || []);
   } catch { console.error('Dashboard load failed'); }
 }
@@ -484,7 +480,6 @@ function renderHistory(history) {
   document.getElementById('historyWrap').innerHTML = html;
 }
 
-// ── All Employees — uses full employees list from DB ─────────────────────────
 function renderEmployees(employees) {
   let html = '';
   for (const e of employees) {
@@ -537,6 +532,7 @@ async function addEmployee() {
 }
 
 setInterval(() => { if (adminToken) loadDashboard(); }, 30000);
+</script>
 <script src="/transition.js"></script>
 </body>
 </html>
