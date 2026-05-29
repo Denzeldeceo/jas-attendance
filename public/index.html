@@ -69,6 +69,16 @@
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     .gps-badge.checking .gps-dot { animation: pulse 1.2s infinite; }
 
+    /* Device lock banner */
+    .device-banner {
+      display: none; width: 100%; margin-bottom: 14px;
+      background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35);
+      border-radius: 14px; padding: 12px 16px;
+      font-size: 12px; font-weight: 600; color: #fbbf24;
+      text-align: center; line-height: 1.6; letter-spacing: 0.3px;
+    }
+    .device-banner.show { display: block; }
+
     .card {
       background: rgba(12, 6, 0, 0.82);
       backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
@@ -159,6 +169,9 @@
     </div>
   </div>
 
+  <!-- Device-locked banner (shown when device is claimed by someone else today) -->
+  <div class="device-banner" id="deviceBanner"></div>
+
   <div class="card">
     <div class="pin-label">Enter your 4-digit PIN</div>
     <div class="pin-dots">
@@ -174,11 +187,11 @@
     </div>
 
     <div class="keypad-wrap">
-      <!-- Lock overlay — shown when GPS not confirmed -->
+      <!-- Lock overlay -->
       <div class="keypad-lock" id="keypadLock">
         <div class="lock-icon">📍</div>
-        <div class="lock-text">You must be at the workplace<br>to sign in or out</div>
-        <button class="lock-retry" onclick="checkLocation()">Retry Location</button>
+        <div class="lock-text" id="lockText">You must be at the workplace<br>to sign in or out</div>
+        <button class="lock-retry" id="lockRetryBtn" onclick="checkLocation()">Retry Location</button>
       </div>
 
       <div class="keypad">
@@ -205,28 +218,63 @@
 
 <script>
   // ─────────────────────────────────────────────
-  // EDIT THESE TWO VALUES:
-  const WORKPLACE_LAT    = 6.2769144;    // ← Replace with your latitude
-  const WORKPLACE_LNG    = -10.6892312;  // ← Replace with your longitude
-  const ALLOWED_RADIUS_M = 200;       // ← Metres — 50 / 100 / 200
+  // EDIT THESE VALUES:
+  const WORKPLACE_LAT    = 6.2769144;
+  const WORKPLACE_LNG    = -10.6892312;
+  const ALLOWED_RADIUS_M = 200;
+  // Work hours: 9:00 AM – 8:00 PM, 7 days a week
+  const WORK_START_HOUR  = 9;
+  const WORK_END_HOUR    = 20;  // 8 PM
   // ─────────────────────────────────────────────
 
-  let pin  = '';
-  let mode = 'in';
+  let pin        = '';
+  let mode       = 'in';
   let locationOk = false;
+  let deviceId   = getOrCreateDeviceId();
 
-  // ── Clock ──
+  // ── Device fingerprint ──────────────────────────────────────────────────────
+  // A stable ID stored in localStorage so the same browser/device always
+  // sends the same identifier. It resets each calendar day on the SERVER
+  // side, so the restriction is per-day automatically.
+  function getOrCreateDeviceId() {
+    const key = 'jas_device_id';
+    let id = localStorage.getItem(key);
+    if (!id) {
+      // Generate a random UUID-style string
+      id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem(key, id);
+    }
+    return id;
+  }
+
+  // ── Clock ──────────────────────────────────────────────────────────────────
   function updateClock() {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
     document.getElementById('headerTime').textContent = dateStr + ' · ' + timeStr;
+
     const h = now.getHours(), m = now.getMinutes();
-    const isLate = h > 9 || (h === 9 && m > 45);
     const statusEl = document.getElementById('statusLabel');
     const dotEl    = document.querySelector('.status-dot');
     const badgeEl  = dotEl.parentElement;
-    if (isLate) {
+
+    if (h < WORK_START_HOUR) {
+      // Before work hours
+      statusEl.textContent = 'NOT YET OPEN — OPENS AT 9:00 AM';
+      dotEl.style.background = '#94a3b8';
+      badgeEl.style.background = 'rgba(148,163,184,0.2)';
+      badgeEl.style.borderColor = 'rgba(148,163,184,0.4)';
+      badgeEl.style.color = '#94a3b8';
+    } else if (h >= WORK_END_HOUR) {
+      // After work hours
+      statusEl.textContent = 'CLOSED — SHIFT ENDED AT 8:00 PM';
+      dotEl.style.background = '#f87171';
+      badgeEl.style.background = 'rgba(248,113,113,0.2)';
+      badgeEl.style.borderColor = 'rgba(248,113,113,0.4)';
+      badgeEl.style.color = '#f87171';
+    } else if (h > 9 || (h === 9 && m > 45)) {
+      // Late
       statusEl.textContent = 'LATE — CUTOFF WAS 9:45 AM';
       dotEl.style.background = '#fbbf24';
       badgeEl.style.background = 'rgba(251,191,36,0.2)';
@@ -243,7 +291,7 @@
   updateClock();
   setInterval(updateClock, 1000);
 
-  // ── Haversine distance (metres) ──
+  // ── Haversine distance (metres) ────────────────────────────────────────────
   function getDistance(lat1, lng1, lat2, lng2) {
     const R = 6371000;
     const toRad = d => d * Math.PI / 180;
@@ -253,7 +301,7 @@
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
 
-  // ── GPS badge ──
+  // ── GPS badge ──────────────────────────────────────────────────────────────
   function setGpsBadge(state, text) {
     const badge = document.getElementById('gpsBadge');
     const label = document.getElementById('gpsLabel');
@@ -261,25 +309,40 @@
     label.textContent = text;
   }
 
-  // ── Keypad lock ──
-  function setKeypadLocked(locked, reason) {
-    const lock = document.getElementById('keypadLock');
+  // ── Keypad lock overlay ────────────────────────────────────────────────────
+  // reason: HTML string for .lock-text
+  // showRetry: whether to show the "Retry Location" button
+  function setKeypadLocked(locked, reason, showRetry = true) {
+    const lock    = document.getElementById('keypadLock');
+    const textEl  = document.getElementById('lockText');
+    const retryEl = document.getElementById('lockRetryBtn');
     if (locked) {
-      lock.querySelector('.lock-text').innerHTML = reason || 'You must be at the workplace<br>to sign in or out';
+      textEl.innerHTML  = reason || 'You must be at the workplace<br>to sign in or out';
+      retryEl.style.display = showRetry ? '' : 'none';
       lock.classList.remove('hidden');
     } else {
       lock.classList.add('hidden');
     }
   }
 
-  // ── Location check ──
+  // ── Device banner ──────────────────────────────────────────────────────────
+  function showDeviceBanner(msg) {
+    const el = document.getElementById('deviceBanner');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+  function hideDeviceBanner() {
+    document.getElementById('deviceBanner').classList.remove('show');
+  }
+
+  // ── Location check ─────────────────────────────────────────────────────────
   function checkLocation() {
     setGpsBadge('checking', 'Checking location…');
-    setKeypadLocked(true, 'Verifying your location…<br>Please wait');
+    setKeypadLocked(true, 'Verifying your location…<br>Please wait', false);
 
     if (!navigator.geolocation) {
       setGpsBadge('denied', 'GPS not supported');
-      setKeypadLocked(true, 'This device does not support GPS.<br>Please use a GPS-enabled device.');
+      setKeypadLocked(true, 'This device does not support GPS.<br>Please use a GPS-enabled device.', false);
       return;
     }
 
@@ -293,6 +356,7 @@
           locationOk = true;
           setGpsBadge('ok', `📍 On-site — ${dist}m from workplace`);
           setKeypadLocked(false);
+          checkWorkHours();   // enforce hours after GPS passes
         } else {
           locationOk = false;
           setGpsBadge('far', `📍 Too far — ${dist}m away`);
@@ -313,19 +377,36 @@
     );
   }
 
+  // ── Work hours gate (9 AM – 8 PM) ─────────────────────────────────────────
+  function checkWorkHours() {
+    const now = new Date();
+    const h   = now.getHours();
+    if (h < WORK_START_HOUR || h >= WORK_END_HOUR) {
+      // Outside work hours — lock keypad even if on-site
+      locationOk = false;
+      setKeypadLocked(true,
+        `The attendance system is only active<br>from 9:00 AM to 8:00 PM.<br>Please come back during work hours.`,
+        false
+      );
+    }
+    // else: locationOk already set true by GPS check, keypad is unlocked
+  }
+
   // Run on load
   checkLocation();
-  // Re-check every 2 minutes to catch people walking away
+  // Re-check GPS every 2 minutes
   setInterval(checkLocation, 120000);
+  // Re-check work hours every minute (in case they stay on the page)
+  setInterval(checkWorkHours, 60000);
 
-  // ── Mode ──
+  // ── Mode ───────────────────────────────────────────────────────────────────
   function setMode(m) {
     mode = m;
     document.getElementById('tabIn').classList.toggle('active',  m === 'in');
     document.getElementById('tabOut').classList.toggle('active', m === 'out');
   }
 
-  // ── PIN ──
+  // ── PIN ────────────────────────────────────────────────────────────────────
   function updateDots() {
     for (let i = 0; i < 4; i++)
       document.getElementById('dot' + i).classList.toggle('filled', i < pin.length);
@@ -339,36 +420,60 @@
   function kBack()  { pin = pin.slice(0,-1); updateDots(); }
   function kClear() { pin = ''; updateDots(); }
 
-  // Keyboard
+  // Keyboard support
   document.addEventListener('keydown', e => {
     if (e.key >= '0' && e.key <= '9') kPress(e.key);
     else if (e.key === 'Backspace') kBack();
     else if (e.key === 'Delete' || e.key === 'Escape') kClear();
   });
 
-  // ── Status msg ──
+  // ── Status msg ─────────────────────────────────────────────────────────────
   function showMsg(text, type) {
     const el = document.getElementById('statusMsg');
     el.textContent = text; el.className = 'status-msg ' + type;
     setTimeout(() => { if (el.textContent === text) { el.textContent=''; el.className='status-msg empty'; } }, 4000);
   }
 
-  // ── Submit ──
+  // ── Submit ─────────────────────────────────────────────────────────────────
   async function submit() {
     if (!locationOk) { showMsg('📍 Location not verified — cannot sign in', 'error'); kClear(); return; }
+
+    // Work hours double-check on client side
+    const now = new Date();
+    const h   = now.getHours();
+    if (h < WORK_START_HOUR || h >= WORK_END_HOUR) {
+      showMsg('⏰ Outside work hours (9 AM – 8 PM)', 'error');
+      kClear(); return;
+    }
+
     const submittedPin = pin; kClear();
     const endpoint = mode === 'in' ? '/api/clock-in' : '/api/clock-out';
-    const timeNow  = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const timeNow  = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
     try {
-      const res  = await fetch(endpoint, {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ staffPin: submittedPin })
+        body: JSON.stringify({
+          staffPin: submittedPin,
+          deviceId: deviceId          // ← sent on every request
+        })
       });
       const data = await res.json();
-      if (res.ok) showMsg(data.message || '✅ ' + (mode==='in'?'Clocked IN':'Clocked OUT') + ' at ' + timeNow, 'success');
-      else showMsg(data.error || 'Something went wrong', 'error');
-    } catch { showMsg('⚠️ Network error — please try again', 'error'); }
+
+      if (res.ok) {
+        hideDeviceBanner();
+        showMsg(data.message || '✅ ' + (mode === 'in' ? 'Clocked IN' : 'Clocked OUT') + ' at ' + timeNow, 'success');
+      } else {
+        // 409 = device already claimed by another employee today
+        if (res.status === 409) {
+          showDeviceBanner('⚠️ ' + (data.error || 'This device is already registered to another employee today.'));
+        }
+        showMsg(data.error || 'Something went wrong', 'error');
+      }
+    } catch {
+      showMsg('⚠️ Network error — please try again', 'error');
+    }
   }
 </script>
 <script src="/transition.js"></script>
