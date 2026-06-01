@@ -44,4 +44,64 @@ export default async function handler(req, res) {
   const { data: deviceLock } = await supabase
     .from('device_locks')
     .select('employee_id, employee_name')
-    .eq('
+    .eq('device_id', deviceId)
+    .eq('date', today)
+    .maybeSingle();
+
+  if (deviceLock && deviceLock.employee_id !== employee.id) {
+    return res.status(409).json({
+      error: `This device is already registered to ${deviceLock.employee_name} today. Each device can only be used by one employee per day.`
+    });
+  }
+
+  // ── Block: employee already used a DIFFERENT device today ─────────────────
+  const { data: empLock } = await supabase
+    .from('device_locks')
+    .select('device_id')
+    .eq('employee_id', employee.id)
+    .eq('date', today)
+    .maybeSingle();
+
+  if (empLock && empLock.device_id !== deviceId) {
+    return res.status(409).json({
+      error: `${employee.name} already clocked in on a different device today. Contact your admin if you need a device switch.`
+    });
+  }
+
+  // ── Determine on-time vs late ──────────────────────────────────────────────
+  const now    = new Date();
+  const isLate = now.getHours() > CUTOFF_HOUR ||
+                 (now.getHours() === CUTOFF_HOUR && now.getMinutes() > CUTOFF_MINUTE);
+  const status  = isLate ? 'late' : 'present';
+  const clockIn = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  // ── Write attendance record ────────────────────────────────────────────────
+  const { error: upsertErr } = await supabase
+    .from('attendance')
+    .upsert({
+      employee_id: employee.id,
+      date:        today,
+      clock_in:    clockIn,
+      device_id:   deviceId,
+      status,
+    }, { onConflict: 'employee_id,date' });
+
+  if (upsertErr) return res.status(500).json({ error: 'Database error. Please try again.' });
+
+  // ── Lock this device to this employee for today ───────────────────────────
+  await supabase
+    .from('device_locks')
+    .upsert({
+      device_id:     deviceId,
+      employee_id:   employee.id,
+      employee_name: employee.name,
+      date:          today,
+      locked_at:     clockIn,
+    }, { onConflict: 'device_id,date' });
+
+  const msg = isLate
+    ? `⚠️ ${employee.name} clocked in LATE at ${clockIn}`
+    : `✅ Welcome, ${employee.name}! Clocked in at ${clockIn}`;
+
+  return res.status(200).json({ success: true, message: msg, name: employee.name, status });
+}
