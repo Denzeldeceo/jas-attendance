@@ -8,12 +8,6 @@ export default async function handler(req, res) {
   if (!staffPin || staffPin.length !== 4) return res.status(400).json({ error: 'Invalid PIN' });
   if (!deviceId) return res.status(400).json({ error: 'Device ID missing. Please refresh and try again.' });
 
-  // ── Block: outside working hours (9:00 AM – 8:00 PM) ─────────────────────
-  const nowHour = new Date().getHours();
-  if (nowHour < 9 || nowHour >= 20) {
-    return res.status(403).json({ error: 'Clock-out is only allowed between 9:00 AM and 8:00 PM.' });
-  }
-
   // ── Find employee by PIN ───────────────────────────────────────────────────
   const { data: employee, error: empErr } = await supabase
     .from('employees')
@@ -28,7 +22,7 @@ export default async function handler(req, res) {
   // ── Find today's attendance record ────────────────────────────────────────
   const { data: record } = await supabase
     .from('attendance')
-    .select('id, clock_in, clock_out, device_id')
+    .select('id, clock_in, clock_out')
     .eq('employee_id', employee.id)
     .eq('date', today)
     .single();
@@ -40,14 +34,7 @@ export default async function handler(req, res) {
     return res.status(409).json({ error: `${employee.name} already clocked out today.` });
   }
 
-  // ── Block: must clock out on the same device used to clock in ─────────────
-  if (record.device_id && record.device_id !== deviceId) {
-    return res.status(409).json({
-      error: `You must clock out on the same device you clocked in with today. Contact your admin if you need help.`
-    });
-  }
-
-  // ── Write clock-out time ───────────────────────────────────────────────────
+  // ── Write clock-out time (no time restriction) ────────────────────────────
   const now      = new Date();
   const clockOut = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
