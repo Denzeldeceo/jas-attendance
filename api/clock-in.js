@@ -11,10 +11,10 @@ export default async function handler(req, res) {
   if (!staffPin || staffPin.length !== 4) return res.status(400).json({ error: 'Invalid PIN' });
   if (!deviceId) return res.status(400).json({ error: 'Device ID missing. Please refresh and try again.' });
 
-  // ── Block: before 9:00 AM (midnight–8:59 AM not allowed) ─────────────────
+  // ── Block: before 9:00 AM or after 11:00 PM ───────────────────────────────
   const nowHour = new Date().getHours();
-  if (nowHour < 9) {
-    return res.status(403).json({ error: 'Clock-in is not available before 9:00 AM.' });
+  if (nowHour < 9 || nowHour >= 23) {
+    return res.status(403).json({ error: 'Clock-in is only available between 9:00 AM and 11:00 PM.' });
   }
 
   // ── Find employee by PIN ───────────────────────────────────────────────────
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     return res.status(409).json({ error: `${employee.name} already clocked in today.` });
   }
 
-  // ── Determine on-time vs late (no blocking — just marking) ────────────────
+  // ── Determine on-time vs late ──────────────────────────────────────────────
   const now    = new Date();
   const isLate = now.getHours() > CUTOFF_HOUR ||
                  (now.getHours() === CUTOFF_HOUR && now.getMinutes() > CUTOFF_MINUTE);
