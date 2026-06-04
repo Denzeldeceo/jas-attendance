@@ -17,9 +17,9 @@ export default async function handler(req, res) {
 
   if (empErr || !employee) return res.status(401).json({ error: 'PIN not recognised. Try again.' });
 
-  // ── Smart date: treat midnight–2 AM as still the previous workday ─────────
-  const now      = new Date();
-  const dateObj  = new Date(now);
+  // ── Smart date: midnight–2 AM still counts as previous workday ───────────
+  const now     = new Date();
+  const dateObj = new Date(now);
   if (now.getHours() < 2) dateObj.setDate(dateObj.getDate() - 1);
   const today = dateObj.toISOString().slice(0, 10);
 
@@ -32,13 +32,13 @@ export default async function handler(req, res) {
     .single();
 
   if (!record?.clock_in) {
-    return res.status(400).json({ error: `${employee.name} hasn't clocked in yet today.` });
+    return res.status(400).json({ error: `${employee.name} hasn't clocked in yet today. Please use Clock In first.` });
   }
   if (record.clock_out) {
     return res.status(409).json({ error: `${employee.name} already clocked out today.` });
   }
 
-  // ── Write clock-out time — active until midnight ──────────────────────────
+  // ── Write clock-out time — allowed anytime up to 11 PM ────────────────────
   const clockOut = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   const { error: updateErr } = await supabase
