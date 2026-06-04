@@ -40,6 +40,34 @@ export default async function handler(req, res) {
     return res.status(409).json({ error: `${employee.name} already clocked in today.` });
   }
 
+  // ── Block: device already used by a DIFFERENT employee today ─────────────
+  const { data: deviceLock } = await supabase
+    .from('device_locks')
+    .select('employee_id, employee_name')
+    .eq('device_id', deviceId)
+    .eq('date', today)
+    .maybeSingle();
+
+  if (deviceLock && deviceLock.employee_id !== employee.id) {
+    return res.status(409).json({
+      error: `This device was already used by ${deviceLock.employee_name} today. Each device can only be used by one employee per day. Please contact your admin.`
+    });
+  }
+
+  // ── Block: employee already used a DIFFERENT device today ─────────────────
+  const { data: empLock } = await supabase
+    .from('device_locks')
+    .select('device_id')
+    .eq('employee_id', employee.id)
+    .eq('date', today)
+    .maybeSingle();
+
+  if (empLock && empLock.device_id !== deviceId) {
+    return res.status(409).json({
+      error: `${employee.name} already clocked in on a different device today. Contact your admin if you need help.`
+    });
+  }
+
   // ── Determine on-time vs late ──────────────────────────────────────────────
   const now    = new Date();
   const isLate = now.getHours() > CUTOFF_HOUR ||
@@ -59,6 +87,17 @@ export default async function handler(req, res) {
     }, { onConflict: 'employee_id,date' });
 
   if (upsertErr) return res.status(500).json({ error: 'Database error. Please try again.' });
+
+  // ── Lock this device to this employee for today ───────────────────────────
+  await supabase
+    .from('device_locks')
+    .upsert({
+      device_id:     deviceId,
+      employee_id:   employee.id,
+      employee_name: employee.name,
+      date:          today,
+      locked_at:     clockIn,
+    }, { onConflict: 'device_id,date' });
 
   const msg = isLate
     ? `⚠️ ${employee.name} clocked in LATE at ${clockIn}`
