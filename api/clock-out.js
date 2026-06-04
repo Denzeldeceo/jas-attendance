@@ -17,7 +17,14 @@ export default async function handler(req, res) {
 
   if (empErr || !employee) return res.status(401).json({ error: 'PIN not recognised. Try again.' });
 
-  const today = new Date().toISOString().slice(0, 10);
+  // ── Use today's date BUT treat midnight–2AM as still belonging to "today" ─
+  // This ensures a late shift ending after midnight doesn't flip to next day.
+  const now   = new Date();
+  const hour  = now.getHours();
+  // If it's between midnight and 2 AM, use yesterday's date so the record matches
+  const dateObj = new Date(now);
+  if (hour < 2) dateObj.setDate(dateObj.getDate() - 1);
+  const today = dateObj.toISOString().slice(0, 10);
 
   // ── Find today's attendance record ────────────────────────────────────────
   const { data: record } = await supabase
@@ -34,8 +41,7 @@ export default async function handler(req, res) {
     return res.status(409).json({ error: `${employee.name} already clocked out today.` });
   }
 
-  // ── Write clock-out time (allowed at any time, including past 8 PM) ───────
-  const now      = new Date();
+  // ── Write clock-out time — no time restriction at all ─────────────────────
   const clockOut = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   const { error: updateErr } = await supabase
