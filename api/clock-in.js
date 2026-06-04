@@ -11,10 +11,10 @@ export default async function handler(req, res) {
   if (!staffPin || staffPin.length !== 4) return res.status(400).json({ error: 'Invalid PIN' });
   if (!deviceId) return res.status(400).json({ error: 'Device ID missing. Please refresh and try again.' });
 
-  // ── Block: outside working hours (8:00 AM – 12:00 AM midnight) ───────────
+  // ── Block: before 9:00 AM (midnight–8:59 AM not allowed) ─────────────────
   const nowHour = new Date().getHours();
-  if (nowHour < 8) {
-    return res.status(403).json({ error: 'Clock-in is not available before 8:00 AM.' });
+  if (nowHour < 9) {
+    return res.status(403).json({ error: 'Clock-in is not available before 9:00 AM.' });
   }
 
   // ── Find employee by PIN ───────────────────────────────────────────────────
