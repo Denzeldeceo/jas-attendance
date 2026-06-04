@@ -11,20 +11,6 @@ export default async function handler(req, res) {
   if (!staffPin || staffPin.length !== 4) return res.status(400).json({ error: 'Invalid PIN' });
   if (!deviceId) return res.status(400).json({ error: 'Device ID missing. Please refresh and try again.' });
 
-  // ── Block: outside working hours (9:00 AM – 8:00 PM) ─────────────────────
-  const now2    = new Date();
-  const nowHour = now2.getHours();
-  const nowMin  = now2.getMinutes();
-
-  if (nowHour < 9 || nowHour >= 20) {
-    return res.status(403).json({ error: 'Clock-in is only allowed between 9:00 AM and 8:00 PM.' });
-  }
-
-  // ── Block: past 9:45 AM cutoff ────────────────────────────────────────────
-  if (nowHour > 9 || (nowHour === 9 && nowMin > 45)) {
-    return res.status(403).json({ error: 'Clock-in is now closed. Cutoff was 9:45 AM. Please contact your admin.' });
-  }
-
   // ── Find employee by PIN ───────────────────────────────────────────────────
   const { data: employee, error: empErr } = await supabase
     .from('employees')
@@ -48,7 +34,7 @@ export default async function handler(req, res) {
     return res.status(409).json({ error: `${employee.name} already clocked in today.` });
   }
 
-  // ── Determine on-time vs late ──────────────────────────────────────────────
+  // ── Determine on-time vs late (no time blocking — just marking) ───────────
   const now    = new Date();
   const isLate = now.getHours() > CUTOFF_HOUR ||
                  (now.getHours() === CUTOFF_HOUR && now.getMinutes() > CUTOFF_MINUTE);
