@@ -224,7 +224,7 @@
   const ALLOWED_RADIUS_M = 999999;
   // Work hours: 9:00 AM – 8:00 PM, 7 days a week
   const WORK_START_HOUR  = 9;
-  const WORK_END_HOUR    = 20;  // 8 PM
+const WORK_END_HOUR    = 23;  // 11 PM
   // ─────────────────────────────────────────────
 
   let pin        = '';
@@ -268,7 +268,7 @@
       badgeEl.style.color = '#94a3b8';
     } else if (h >= WORK_END_HOUR) {
       // After work hours
-      statusEl.textContent = 'CLOSED — SHIFT ENDED AT 12:00 AM';
+      statusEl.textContent = 'CLOSED — SHIFT ENDED AT 11:00 AM';
       dotEl.style.background = '#f87171';
       badgeEl.style.background = 'rgba(248,113,113,0.2)';
       badgeEl.style.borderColor = 'rgba(248,113,113,0.4)';
