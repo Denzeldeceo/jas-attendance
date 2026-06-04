@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     return res.status(409).json({ error: `${employee.name} already clocked out today.` });
   }
 
-  // ── Write clock-out time (no time restriction) ────────────────────────────
+  // ── Write clock-out time (allowed at any time, including past 8 PM) ───────
   const now      = new Date();
   const clockOut = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
