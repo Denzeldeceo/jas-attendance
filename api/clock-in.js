@@ -4,7 +4,7 @@ const CUTOFF_HOUR   = 9;
 const CUTOFF_MINUTE = 45;
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(503).json({ error: 'System is currently offline. Please contact tech.' });;
 
   const { staffPin, deviceId } = req.body;
 
