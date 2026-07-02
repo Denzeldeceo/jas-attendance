@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   const { data: todayRows } = await supabase
     .from('attendance')
     .select('employee_id, date, clock_in, clock_out, device_id, status, employees(name, role)')
-    .eq('date', today)
+    .eq('date', todays)
     .order('clock_in', { ascending: true });
   const todayData = (todayRows || []).map(r => ({
     name:     r.employees?.name,
