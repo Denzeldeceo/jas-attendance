@@ -184,6 +184,11 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 .badge-pending { background: rgba(148,163,184,0.15); color: var(--pending); }
 .badge-locked  { background: rgba(251,191,36,0.15); color: #fbbf24; }
 
+.count-present { color: var(--present); font-weight: 700; }
+.count-late    { color: var(--late); font-weight: 700; }
+.count-absent  { color: var(--absent); font-weight: 700; }
+.count-total   { color: var(--orange); font-weight: 700; }
+
 .add-form {
   background: var(--card); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 20px 18px;
@@ -291,6 +296,18 @@ tr:hover td { background: rgba(255,255,255,0.03); }
       <table>
         <thead><tr><th>Employee</th><th>Role</th><th>Clock In</th><th>Clock Out</th><th>Device</th><th>Status</th></tr></thead>
         <tbody id="todayBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Per-employee attendance summary -->
+    <div class="section-title">Attendance Summary — By Employee</div>
+    <div class="section-note">
+      All-time totals per employee, based on every recorded attendance day.
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Employee</th><th>Role</th><th>Present</th><th>Late</th><th>Absent</th><th>Total Days</th></tr></thead>
+        <tbody id="summaryBody"></tbody>
       </table>
     </div>
 
@@ -409,6 +426,7 @@ async function loadDashboard() {
     renderHistory(d.history || []);
     renderEmployees(d.employees || []);
     renderDeviceLocks(d.deviceLocks || []);
+    renderSummary(d.employeeStats || []);
   } catch { console.error('Dashboard load failed'); }
 }
 
@@ -435,6 +453,22 @@ function renderToday(records) {
   document.getElementById('statPresent').textContent = present;
   document.getElementById('statLate').textContent    = late;
   document.getElementById('statAbsent').textContent  = absent;
+}
+
+function renderSummary(stats) {
+  let html = '';
+  for (const s of stats) {
+    html += `<tr>
+      <td><strong>${s.name}</strong></td>
+      <td>${s.role}</td>
+      <td class="count-present">${s.present}</td>
+      <td class="count-late">${s.late}</td>
+      <td class="count-absent">${s.absent}</td>
+      <td class="count-total">${s.total}</td>
+    </tr>`;
+  }
+  if (!html) html = '<tr><td colspan="6" style="opacity:.35;padding:20px;text-align:center">No attendance data yet</td></tr>';
+  document.getElementById('summaryBody').innerHTML = html;
 }
 
 function renderDeviceLocks(locks) {
