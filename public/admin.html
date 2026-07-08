@@ -300,9 +300,12 @@ tr:hover td { background: rgba(255,255,255,0.03); }
     </div>
 
     <!-- Per-employee attendance summary -->
-    <div class="section-title">Attendance Summary — By Employee</div>
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <span>Attendance Summary — <span id="summaryMonthLabel">This Month</span></span>
+      <select id="summaryMonthPicker" onchange="onMonthChange()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:var(--white);border-radius:8px;padding:6px 10px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.5px;"></select>
+    </div>
     <div class="section-note">
-      All-time totals per employee, based on every recorded attendance day.
+      Days present, late, and absent per employee for the selected month.
     </div>
     <div class="table-wrap">
       <table>
@@ -354,6 +357,30 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 
 <script>
 let adminToken = sessionStorage.getItem('jasAdminToken') || '';
+let selectedMonth = null; // 1-12
+let selectedYear  = null;
+
+function populateMonthPicker() {
+  const picker = document.getElementById('summaryMonthPicker');
+  const now = new Date();
+  let html = '';
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const m = d.getMonth() + 1, y = d.getFullYear();
+    const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    html += `<option value="${y}-${m}">${label}</option>`;
+  }
+  picker.innerHTML = html;
+  selectedMonth = now.getMonth() + 1;
+  selectedYear  = now.getFullYear();
+}
+
+function onMonthChange() {
+  const [y, m] = document.getElementById('summaryMonthPicker').value.split('-').map(Number);
+  selectedYear  = y;
+  selectedMonth = m;
+  loadDashboard();
+}
 
 function togglePass() {
   const input = document.getElementById('loginPass');
@@ -419,14 +446,16 @@ if (adminToken) {
 
 async function loadDashboard() {
   try {
-    const r = await fetch('/api/admin/records', { headers: { 'Authorization': 'Bearer ' + adminToken } });
+    if (selectedMonth === null) populateMonthPicker();
+    const params = new URLSearchParams({ month: selectedMonth, year: selectedYear });
+    const r = await fetch('/api/admin/records?' + params.toString(), { headers: { 'Authorization': 'Bearer ' + adminToken } });
     if (r.status === 401) { logout(); return; }
     const d = await r.json();
     renderToday(d.today || []);
     renderHistory(d.history || []);
     renderEmployees(d.employees || []);
     renderDeviceLocks(d.deviceLocks || []);
-    renderSummary(d.employeeStats || []);
+    renderSummary(d.employeeStats || [], d.statsMonthLabel);
   } catch { console.error('Dashboard load failed'); }
 }
 
@@ -455,7 +484,8 @@ function renderToday(records) {
   document.getElementById('statAbsent').textContent  = absent;
 }
 
-function renderSummary(stats) {
+function renderSummary(stats, monthLabel) {
+  if (monthLabel) document.getElementById('summaryMonthLabel').textContent = monthLabel;
   let html = '';
   for (const s of stats) {
     html += `<tr>
