@@ -60,10 +60,20 @@ export default async function handler(req, res) {
     .from('employees')
     .select('id, name, role')
     .order('name', { ascending: true });
-  // ── Per-employee attendance totals (all-time present/late/absent) ────────
+  // ── Per-employee attendance totals (selected calendar month) ─────────────
+  const now = new Date();
+  const qMonth = parseInt(req.query.month, 10); // 1-12
+  const qYear  = parseInt(req.query.year, 10);
+  const targetYear  = Number.isInteger(qYear)  ? qYear  : now.getFullYear();
+  const targetMonth = (Number.isInteger(qMonth) && qMonth >= 1 && qMonth <= 12) ? qMonth - 1 : now.getMonth();
+  const monthStart = new Date(targetYear, targetMonth, 1).toISOString().slice(0, 10);
+  const monthEnd   = new Date(targetYear, targetMonth + 1, 0).toISOString().slice(0, 10);
+  const monthLabel = new Date(targetYear, targetMonth, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const { data: statusRows } = await supabase
     .from('attendance')
-    .select('employee_id, status');
+    .select('employee_id, status')
+    .gte('date', monthStart)
+    .lte('date', monthEnd);
   const statsMap = {}; // employee_id -> { present, late, absent }
   for (const r of (statusRows || [])) {
     if (!statsMap[r.employee_id]) {
@@ -91,5 +101,6 @@ export default async function handler(req, res) {
     deviceLocks,
     employees:     employeeRows || [],
     employeeStats,
+    statsMonthLabel: monthLabel,
   });
 }
